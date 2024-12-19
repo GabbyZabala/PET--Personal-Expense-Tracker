@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST["username"];
     $password = $_POST["password"];
 
-    // Hash the password
+    // Hash the password using password_hash()
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
     $stmt = $conn->prepare("INSERT INTO Account_Log (Account_Display_Name, Username, Password) VALUES (?, ?, ?)");
@@ -28,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($stmt->execute()) {
         $message = "Registration successful! You can now login.";
-        
+
         // Redirect to login.php after successful registration
         header("Location: login.php");
         exit(); // Make sure to exit after redirection

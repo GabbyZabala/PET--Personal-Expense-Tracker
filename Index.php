@@ -1,16 +1,20 @@
 <?php
+// index.php
 session_start();
 
-// Database configuration
+// Include database functions
+require_once 'Functions/db_functions.php';
+// Include getDisplayName function
+require_once 'Functions/get_displayname.php'; 
+
+// Database configuration (no changes)
 $servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "expense_tracker";
 
-// Create connection
+// Create connection (no changes)
 $conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
@@ -18,6 +22,7 @@ if ($conn->connect_error) {
 // Check if the user is logged in
 if (isset($_SESSION["account_id"])) {
     $account_id = $_SESSION["account_id"];
+    $display_name = getDisplayName($conn, $account_id); // Get display name
 } else {
     // Redirect to login page if not logged in
     header("Location: login.php");
@@ -30,104 +35,75 @@ $description = "";
 $amount = "";
 $category_id = "";
 $message = "";
+$edit_category_id = null;
+$edit_category_name = "";
 
-// Fetch categories
-$categories = [];
-$sql = "SELECT Category_ID, Category_Name FROM Category_Choices";
-$result = $conn->query($sql);
-if ($result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $categories[$row["Category_ID"]] = $row["Category_Name"];
-    }
-}
+// Fetch categories for the current user
+$categories = getCategories($conn, $account_id);
 
 // Handle form submissions
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($_POST["add"])) {
-        // Add expense
-        $date = $_POST["date"];
-        $description = $_POST["description"];
-        $amount = $_POST["amount"];
-        $category_id = $_POST["category_id"];
-
-        $stmt = $conn->prepare("INSERT INTO expenses (Account_ID, date, description, amount, Category_ID) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("isdii", $account_id, $date, $description, $amount, $category_id);
-
-        if ($stmt->execute()) {
-            $message = "Expense added successfully!";
-
-            // Update total spent for the account
-            $update_sql = "UPDATE Account_Log SET Total_Spent = Total_Spent + ? WHERE Account_ID = ?";
-            $update_stmt = $conn->prepare($update_sql);
-            $update_stmt->bind_param("di", $amount, $account_id);
-            $update_stmt->execute();
-        } else {
-            $message = "Error adding expense: " . $stmt->error;
-        }
-        $stmt->close();
-        $update_stmt->close();
+        // Add expense using the new function
+        $message = addExpense($conn, $account_id, $_POST["date"], $_POST["description"], $_POST["amount"], $_POST["category_id"]);
     } elseif (isset($_POST["delete"])) {
-        // Delete expense
-        $expense_id = $_POST["delete"];
-
-        // Get the amount of the expense being deleted (to update Total_Spent)
-        $amount_sql = "SELECT Amount FROM Expenses WHERE Expense_ID = ?";
-        $amount_stmt = $conn->prepare($amount_sql);
-        $amount_stmt->bind_param("i", $expense_id);
-        $amount_stmt->execute();
-        $amount_result = $amount_stmt->get_result();
-        if ($amount_result->num_rows == 1) {
-            $amount_row = $amount_result->fetch_assoc();
-            $deleted_amount = $amount_row["Amount"];
-
-            // Delete the expense
-            $sql = "DELETE FROM expenses WHERE Expense_ID = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $expense_id);
-
-            if ($stmt->execute()) {
-                $message = "Expense deleted successfully!";
-
-                // Update total spent for the account
-                $update_sql = "UPDATE Account_Log SET Total_Spent = Total_Spent - ? WHERE Account_ID = ?";
-                $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("di", $deleted_amount, $account_id);
-                $update_stmt->execute();
-            } else {
-                $message = "Error deleting expense: " . $stmt->error;
-            }
-            $stmt->close();
-            $update_stmt->close();
+        // Delete expense using the new function
+        $message = deleteExpense($conn, $_POST["delete"], $account_id);
+    } elseif (isset($_POST["add_category"])) {
+        // Add new category
+        $new_category_name = trim($_POST["new_category_name"]);
+        $message = addCategory($conn, $account_id, $new_category_name);
+        if ($message == "New category added successfully!") {
+            $categories = getCategories($conn, $account_id);
         }
-        $amount_stmt->close();
+    } elseif (isset($_POST["edit_category"])) {
+        // Set category ID and name for editing
+        $edit_category_id = $_POST["edit_category"];
+        $edit_category_name = $categories[$edit_category_id];
+    } elseif (isset($_POST["update_category"])) {
+        // Update existing category
+        $update_category_id = $_POST["update_category_id"];
+        $update_category_name = trim($_POST["update_category_name"]);
+        $message = updateCategory($conn, $account_id, $update_category_id, $update_category_name);
+        if ($message == "Category updated successfully!") {
+            $categories = getCategories($conn, $account_id);
+        }
+    } elseif (isset($_POST["delete_category"])) {
+        // Delete category
+        $delete_category_id = $_POST["delete_category"];
+        $message = deleteCategory($conn, $account_id, $delete_category_id); // Pass $account_id
+        if ($message == "Category deleted successfully!" || $message == "Category removed from your account!") {
+            $categories = getCategories($conn, $account_id);
+        }
     }
 }
 
-// Fetch expenses for the current account
-$sql = "SELECT e.Expense_ID, e.date, e.description, e.amount, c.Category_Name 
-        FROM expenses e
-        INNER JOIN Category_Choices c ON e.Category_ID = c.Category_ID
-        WHERE e.Account_ID = ?
-        ORDER BY e.date DESC";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $account_id);
-$stmt->execute();
-$result = $stmt->get_result();
+// Fetch expenses for the current account (with filter)
+$filter_category_id = isset($_GET['filter_category_id']) ? $_GET['filter_category_id'] : '';
+$result = getExpenses($conn, $account_id, $filter_category_id);
 
 // Fetch total expenses for the current account
-$totalExpenses = 0;
-$total_sql = "SELECT Total_Spent FROM Account_Log WHERE Account_ID = ?";
-$total_stmt = $conn->prepare($total_sql);
-$total_stmt->bind_param("i", $account_id);
-$total_stmt->execute();
-$total_result = $total_stmt->get_result();
-if ($total_result->num_rows > 0) {
-    $total_row = $total_result->fetch_assoc();
-    $totalExpenses = $total_row["Total_Spent"];
+$totalExpenses = getTotalExpenses($conn, $account_id);
+
+// Fetch categories for the current user, excluding 'Global' categories
+$account_categories = [];
+$account_categories_sql = "SELECT cc.Category_ID, cc.Category_Name 
+                           FROM Category_Choices cc
+                           INNER JOIN Account_Category ac ON cc.Category_ID = ac.Category_ID
+                           WHERE ac.Account_ID = ? AND cc.Category_Status <> 'Global'";
+$account_categories_stmt = $conn->prepare($account_categories_sql);
+$account_categories_stmt->bind_param("i", $account_id);
+$account_categories_stmt->execute();
+$account_categories_result = $account_categories_stmt->get_result();
+
+if ($account_categories_result->num_rows > 0) {
+    while ($row = $account_categories_result->fetch_assoc()) {
+        $account_categories[$row["Category_ID"]] = $row["Category_Name"];
+    }
 }
+$account_categories_stmt->close();
 
 ?>
-
 <!DOCTYPE html>
 <html>
 
@@ -149,6 +125,7 @@ if ($total_result->num_rows > 0) {
 </head>
 
 <body>
+    <p>DisplayName: <span id="displayname"><?php echo htmlspecialchars($display_name); ?></span></p>
 
     <h2>Personal Expense Tracker</h2>
 
@@ -158,7 +135,7 @@ if ($total_result->num_rows > 0) {
     </form>
 
     <?php if ($message != "") : ?>
-    <p><?= $message ?></p>
+        <p><?= $message ?></p>
     <?php endif; ?>
 
     <!-- Add Expense Form -->
@@ -174,6 +151,21 @@ if ($total_result->num_rows > 0) {
             <?php endforeach; ?>
         </select><br><br>
         <input type="submit" name="add" value="Add Expense">
+    </form>
+
+    <!-- Category Filter Form -->
+    <h3>Filter Expenses by Category</h3>
+    <form method="get" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+        <label for="filter_category_id">Category:</label>
+        <select name="filter_category_id" id="filter_category_id">
+            <option value="">All Categories</option>
+            <?php foreach ($categories as $id => $name) : ?>
+                <option value="<?= $id ?>" <?= (isset($_GET['filter_category_id']) && $_GET['filter_category_id'] == $id) ? 'selected' : '' ?>>
+                    <?= $name ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+        <button type="submit">Filter</button>
     </form>
 
     <!-- Expense List -->
@@ -210,12 +202,59 @@ if ($total_result->num_rows > 0) {
 
     <p><strong>Total Expenses:</strong> $<?= number_format($totalExpenses, 2) ?></p>
 
+    <!-- Edit Category Section -->
+    <h3>Edit Categories</h3>
+
+    <!-- Add New Category Form -->
+    <h4>Add Category</h4>
+    <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+        Category Name: <input type="text" name="new_category_name" required><br><br>
+        <input type="submit" name="add_category" value="Add Category">
+    </form>
+
+    <!-- List of Categories with Edit and Delete Options -->
+    <h4>Categories</h4>
+    <table>
+        <tr>
+            <th>Category Name</th>
+            <th>Action</th>
+        </tr>
+        <?php foreach ($account_categories as $id => $category_name) : ?>
+            <tr>
+                <td>
+                    <?php if ($edit_category_id == $id) : ?>
+                        <!-- Edit Category Form -->
+                        <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+                            <input type="hidden" name="update_category_id" value="<?= $id ?>">
+                            <input type="text" name="update_category_name" value="<?= htmlspecialchars($category_name) ?>" required>
+                            <button type="submit" name="update_category">Save</button>
+                        </form>
+                    <?php else : ?>
+                        <?= htmlspecialchars($category_name) ?>
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <?php if ($edit_category_id != $id) : ?>
+                        <!-- Edit and Delete Buttons -->
+                        <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+                            <input type="hidden" name="edit_category" value="<?= $id ?>">
+                            <button type="submit">Edit</button>
+                        </form>
+                        <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+                            <input type="hidden" name="delete_category" value="<?= $id ?>">
+                            <button type="submit" onclick="return confirm('Are you sure you want to delete this category?')">Delete</button>
+                        </form>
+                    <?php endif; ?>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
+
 </body>
 
 </html>
 
 <?php
-$stmt->close();
-$total_stmt->close();
+// Close the database connection at the very end
 $conn->close();
 ?>

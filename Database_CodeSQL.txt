@@ -7,24 +7,36 @@ CREATE DATABASE IF NOT EXISTS expense_tracker;
 USE expense_tracker;
 
 /* Create the Account_Log table*/
-
 CREATE TABLE IF NOT EXISTS Account_Log (
     Account_ID INT(11) AUTO_INCREMENT PRIMARY KEY,
     Account_Display_Name VARCHAR(255) NOT NULL,
-    Username VARCHAR(50) UNIQUE NOT NULL, -- Added UNIQUE constraint
-    Password VARCHAR(255) NOT NULL,         -- Consider using a more secure way to store passwords like hashing
-    Total_Spent DECIMAL(10, 2) DEFAULT 0.00 -- Added to track total spending
+    Username VARCHAR(50) UNIQUE NOT NULL,
+    Password VARCHAR(255) NOT NULL,
+    Total_Spent DECIMAL(10, 2) DEFAULT 0.00,
+    Status VARCHAR(50)
 );
-
 /*Create the Category_Choices table*/
 CREATE TABLE IF NOT EXISTS Category_Choices (
     Category_ID INT(11) AUTO_INCREMENT PRIMARY KEY,
-    Category_Name VARCHAR(50) UNIQUE NOT NULL -- Added UNIQUE constraint
+    Category_Name VARCHAR(50) NOT NULL,
+    Category_Status VARCHAR(50),
+    UNIQUE KEY unique_category_name (Category_Name)
+);
+INSERT INTO Category_Choices (Category_Name,Category_Status) VALUES 
+    ('Food','Global'), 
+    ('Travel','Global');
+/* Create the Account_Category junction table */
+CREATE TABLE IF NOT EXISTS Account_Category (
+    Account_ID INT(11) NOT NULL,
+    Category_ID INT(11) NOT NULL,
+    PRIMARY KEY (Account_ID, Category_ID),
+    FOREIGN KEY (Account_ID) REFERENCES Account_Log(Account_ID),
+    FOREIGN KEY (Category_ID) REFERENCES Category_Choices(Category_ID)
 );
 
 /* Create the Expenses table*/
 CREATE TABLE IF NOT EXISTS Expenses (
-    Expense_ID INT(11) AUTO_INCREMENT PRIMARY KEY, -- Changed to Expense_ID for clarity
+    Expense_ID INT(11) AUTO_INCREMENT PRIMARY KEY,
     Account_ID INT(11) NOT NULL,
     Description VARCHAR(255) NOT NULL,
     Date DATE NOT NULL,
@@ -33,3 +45,28 @@ CREATE TABLE IF NOT EXISTS Expenses (
     FOREIGN KEY (Account_ID) REFERENCES Account_Log(Account_ID),
     FOREIGN KEY (Category_ID) REFERENCES Category_Choices(Category_ID)
 );
+
+/* Create Accounts_View for display purposes */
+CREATE OR REPLACE VIEW Accounts_View AS
+SELECT
+    Account_Display_Name,
+    Username,
+    Total_Spent,
+    '[HIDDEN]' AS Password -- Updated to avoid displaying actual passwords
+FROM
+    Account_Log;
+
+/* Create View_Most_Filtered_Used*/
+CREATE OR REPLACE VIEW View_Most_Filtered_Used AS
+SELECT
+    c.Category_Name AS Filter_Name,
+    COUNT(e.Category_ID) AS Total_Used,
+    COALESCE(SUM(e.Amount), 0) AS Price_in_Total -- Using COALESCE to handle NULL values
+FROM
+    Category_Choices c
+LEFT JOIN
+    Expenses e ON c.Category_ID = e.Category_ID
+GROUP BY
+    c.Category_Name
+ORDER BY
+    Total_Used DESC;

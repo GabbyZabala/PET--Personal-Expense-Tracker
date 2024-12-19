@@ -18,25 +18,36 @@ if ($conn->connect_error) {
 $message = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST["username"];
-    $password = $_POST["password"];
+    $input_username = $_POST["username"];
+    $input_password = $_POST["password"];
 
-    $stmt = $conn->prepare("SELECT Account_ID, Password FROM Account_Log WHERE Username = ?");
-    $stmt->bind_param("s", $username);
+    // Fetch user from database
+    $sql = "SELECT Account_ID, Username, Password, Status FROM Account_Log WHERE Username = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $input_username);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows == 1) {
         $row = $result->fetch_assoc();
-        if (password_verify($password, $row["Password"])) {
+        $hashed_password = $row["Password"];
+
+        // Verify password using password_verify()
+        if (password_verify($input_password, $hashed_password)) {
             $_SESSION["account_id"] = $row["Account_ID"];
-            header("Location: index.php"); // Redirect to your main expense tracking page
+
+            // Check user's status and redirect accordingly
+            if ($row["Status"] == 'Admin') {
+                header("Location: root.php"); // Redirect to admin page
+            } else {
+                header("Location: index.php"); // Redirect to user page
+            }
             exit();
         } else {
-            $message = "Incorrect password";
+            $message = "Invalid password!";
         }
     } else {
-        $message = "Username not found";
+        $message = "Invalid username!";
     }
     $stmt->close();
 }
@@ -46,25 +57,22 @@ $conn->close();
 
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Login</title>
 </head>
-
 <body>
-    <h2>Login</h2>
 
-    <?php if ($message != "") : ?>
-        <p><?= $message ?></p>
-    <?php endif; ?>
+<h2>Login</h2>
 
-    <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-        Username: <input type="text" name="username" required><br><br>
-        Password: <input type="password" name="password" required><br><br>
-        <input type="submit" value="Login">
-    </form>
+<?php if ($message != "") : ?>
+    <p><?= $message ?></p>
+<?php endif; ?>
 
-    <p>Don't have an account? <a href="register.php">Register here</a></p>
+<form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+    Username: <input type="text" name="username" required><br><br>
+    Password: <input type="password" name="password" required><br><br>
+    <input type="submit" value="Login">
+</form>
+
 </body>
-
 </html>
