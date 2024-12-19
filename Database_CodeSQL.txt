@@ -1,0 +1,35 @@
+/*Create the database if it doesn't exist*/
+
+CREATE DATABASE IF NOT EXISTS expense_tracker;
+
+/*Use the database*/
+
+USE expense_tracker;
+
+/* Create the Account_Log table*/
+
+CREATE TABLE IF NOT EXISTS Account_Log (
+    Account_ID INT(11) AUTO_INCREMENT PRIMARY KEY,
+    Account_Display_Name VARCHAR(255) NOT NULL,
+    Username VARCHAR(50) UNIQUE NOT NULL, -- Added UNIQUE constraint
+    Password VARCHAR(255) NOT NULL,         -- Consider using a more secure way to store passwords like hashing
+    Total_Spent DECIMAL(10, 2) DEFAULT 0.00 -- Added to track total spending
+);
+
+/*Create the Category_Choices table*/
+CREATE TABLE IF NOT EXISTS Category_Choices (
+    Category_ID INT(11) AUTO_INCREMENT PRIMARY KEY,
+    Category_Name VARCHAR(50) UNIQUE NOT NULL -- Added UNIQUE constraint
+);
+
+/* Create the Expenses table*/
+CREATE TABLE IF NOT EXISTS Expenses (
+    Expense_ID INT(11) AUTO_INCREMENT PRIMARY KEY, -- Changed to Expense_ID for clarity
+    Account_ID INT(11) NOT NULL,
+    Description VARCHAR(255) NOT NULL,
+    Date DATE NOT NULL,
+    Category_ID INT(11) NOT NULL,
+    Amount DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (Account_ID) REFERENCES Account_Log(Account_ID),
+    FOREIGN KEY (Category_ID) REFERENCES Category_Choices(Category_ID)
+);
