@@ -48,23 +48,32 @@ $conn->close();
 
 <head>
     <title>Register</title>
+    <link href="css/background.css" rel="stylesheet" >
+    <link href="css/intro.css" rel="stylesheet" >
+    <link rel="icon" href="Images/PET-LOGO.png" type="image/png">
 </head>
 
 <body>
-    <h2>Register</h2>
+    <div class="Main-container">
+        <h2>Register a Tracker Account</h2>
 
-    <?php if ($message != "") : ?>
-        <p><?= $message ?></p>
-    <?php endif; ?>
+        <?php if ($message != "") : ?>
+            <script>
+                alert("<?= $message ?>");
+            </script>
+        <?php endif; ?>
 
-    <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-        Account Display Name: <input type="text" name="account_display_name" required><br><br>
-        Username: <input type="text" name="username" required><br><br>
-        Password: <input type="password" name="password" required><br><br>
-        <input type="submit" value="Register">
-    </form>
-
-    <p>Already have an account? <a href="login.php">Login here</a></p>
+        <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+            <label for="account_display_name">Account Display Name: </label>    
+            <input type="text" id="account_display_name" name="account_display_name" required><br>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required><br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required><br>
+            <input type="submit" value="Register">
+        </form>
+        <p>Already have an account? <a href="login.php">Login here</a></p>
+    </div>
 </body>
 
 </html>

@@ -113,170 +113,166 @@ $accounts_result = getAllAccounts($conn);
 
 <head>
     <title>Personal Expense Tracker - Admin</title>
-    <style>
-        table {
-            width: 80%;
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            padding: 8px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-    </style>
+    <link rel="icon" href="Images/PET-LOGO.png" type="image/png">
+    <link href="css/background.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
+    <link href="css/tab-container.css" rel="stylesheet">
+    <script src="script/tabs.js" defer></script>
+    <link href="css/root.css" rel="stylesheet">
 </head>
 
 <body>
-    <p>DisplayName: <span id="displayname"><?php echo htmlspecialchars($display_name); ?></span></p>
+    <div class="View-container">
+        <div class="left-container">
+            <div class="left-container-erf">
+                <img src="Images/PET-LOGO.png" alt="PET-LOGO.png" class="logo-center" />
+                <p>DisplayName: <span id="displayname"><?php echo htmlspecialchars($display_name); ?></span></p>
 
-    <h2>Personal Expense Tracker - Admin</h2>
+                <h2>Personal Expense Tracker - Admin</h2>
 
-    <!-- Logout Button -->
-    <form method="post" action="Functions/logout.php">
-        <button type="submit">Logout</button>
-    </form>
-
-    <?php if ($message != "") : ?>
-        <p><?= $message ?></p>
-    <?php endif; ?>
-
-    <!-- Category Filter Form -->
-    <h3>Filter Expenses by Category</h3>
-    <form method="get" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-        <label for="filter_category_id">Category:</label>
-        <select name="filter_category_id" id="filter_category_id">
-            <option value="">All Categories</option>
-            <?php foreach ($categories as $id => $name) : ?>
-                <option value="<?= $id ?>" <?= (isset($_GET['filter_category_id']) && $_GET['filter_category_id'] == $id) ? 'selected' : '' ?>>
-                    <?= $name ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-        <button type="submit">Filter</button>
-    </form>
-
-    <!-- Expense List -->
-    <h3>Expenses</h3>
-    <table>
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Description</th>
-            <th>Amount</th>
-            <th>Category</th>
-            <th>Account</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php while ($row = $expenses_result->fetch_assoc()) : ?>
-            <tr>
-                <td><?= $row["date"] ?></td>
-                <td><?= $row["description"] ?></td>
-                <td>$<?= number_format($row["amount"], 2) ?></td>
-                <td><?= $row["Category_Name"] ?></td>
-                <td><?= $row["Account_Display_Name"] ?></td>
-                <td>
-                    <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-                        <input type="hidden" name="delete" value="<?= $row["Expense_ID"] ?>">
-                        <input type="submit" value="Delete">
-                    </form>
-                </td>
-            </tr>
-        <?php endwhile; ?>
-    </tbody>
-</table>
-
-    <p><strong>Total Expenses:</strong> $<?= number_format($totalExpenses, 2) ?></p>
-
-    <!-- Edit Category Section -->
-    <h3>Edit Categories</h3>
-
-   <!-- Add New Category Form -->
-   <h4>Add Category</h4>
-    <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-        <label for="new_category_name">Category Name:</label>
-        <input type="text" id="new_category_name" name="new_category_name" required>
-        <button type="submit" name="add_category">Add Category</button>
-    </form>
-
-    <!-- List of Categories with Edit and Delete Options -->
-    <h4>Categories</h4>
-    <table>
-        <tr>
-            <th>Category Name</th>
-            <th>Type</th>
-            <th>Associated Accounts</th>
-            <th>Action</th>
-        </tr>
-        <?php foreach ($account_categories as $id => $category) : ?>
-    <tr>
-        <td>
-            <?php if ($edit_category_id == $id) : ?>
-                <!-- Edit Category Form -->
-                <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-                    <input type="hidden" name="update_category_id" value="<?= $id ?>">
-                    <input type="text" name="update_category_name" value="<?= htmlspecialchars($category['name']) ?>" required>
-                    <button type="submit" name="update_category">Save</button>
+                <!-- Logout Button -->
+                <form method="post" action="Functions/logout.php">
+                    <button type="submit">Logout</button>
                 </form>
-            <?php else : ?>
-                <?= htmlspecialchars($category['name']) ?>
-            <?php endif; ?>
-        </td>
-        <td><?= htmlspecialchars($category['status']) ?></td>
-        <td><?= htmlspecialchars($category['accounts']) ?></td>
-        <td>
-            <?php if ($category['status'] != 'Global') : ?>
-                <?php if ($edit_category_id != $id) : ?>
-                    <!-- Edit and Delete Buttons -->
-                    <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-                        <input type="hidden" name="edit_category" value="<?= $id ?>">
-                        <button type="submit">Edit</button>
-                    </form>
-                    <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-                        <input type="hidden" name="delete_category" value="<?= $id ?>">
-                        <button type="submit" onclick="return confirm('Are you sure you want to delete this category?')">Delete</button>
-                    </form>
+
+                <?php if ($message != "") : ?>
+                    <p><?= $message ?></p>
                 <?php endif; ?>
-            <?php endif; ?>
-        </td>
-    </tr>
-<?php endforeach; ?>
-    </table>
+            </div>
+        </div>
 
-    <!-- Account List Section -->
-    <h3>Account List</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Account ID</th>
-                <th>Account Display Name</th>
-                <th>Total Expenses</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php while ($account_row = $accounts_result->fetch_assoc()) : ?>
-                <tr>
-                    <td><?= $account_row["Account_ID"] ?></td>
-                    <td><?= $account_row["Account_Display_Name"] ?></td>
-                    <td>$<?= number_format($account_row["Total_Spent"], 2) ?></td>
-                    <td>
-                        <!-- Delete Account Form -->
-                        <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-                            <input type="hidden" name="delete_account" value="<?= $account_row["Account_ID"] ?>">
-                            <button type="submit" onclick="return confirm('Are you sure you want to delete this account?');">
-                                Delete
-                            </button>
+        <div class="right-container">
+            <div class="right-container-erf">
+                <div class="top-container">
+                    <!-- Tab Buttons -->
+                    <div class="tabs">
+                        <button class="tab-button active" onclick="showTab('add-expense')">Expenses Records</button>
+                        <button class="tab-button" onclick="showTab('edit-categories')">Categories Lists</button>
+                        <button class="tab-button" onclick="showTab('account-list')">Account List</button>
+                    </div>
+                </div>
+                <div class="down-container">
+                    <!-- Tab Content -->
+                    <div id="add-expense" class="tab-content active">
+                        <h3>Filter Expenses by Category</h3>
+                        <form method="get" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+                            <label for="filter_category_id">Category:</label>
+                            <select name="filter_category_id" id="filter_category_id">
+                                <option value="">All Categories</option>
+                                <?php foreach ($categories as $id => $name) : ?>
+                                    <option value="<?= $id ?>" <?= (isset($_GET['filter_category_id']) && $_GET['filter_category_id'] == $id) ? 'selected' : '' ?>>
+                                        <?= $name ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="submit">Filter</button>
                         </form>
-                    </td>
-                </tr>
-            <?php endwhile; ?>
-        </tbody>
-    </table>
 
+                        <h3>Expenses</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Category</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php while ($row = $expenses_result->fetch_assoc()) : ?>
+                                    <tr>
+                                        <td><?= $row["date"] ?></td>
+                                        <td><?= $row["description"] ?></td>
+                                        <td>$<?= number_format($row["amount"], 2) ?></td>
+                                        <td><?= $row["Category_Name"] ?></td>
+                                        <td>
+                                            <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+                                                <input type="hidden" name="delete" value="<?= $row["Expense_ID"] ?>">
+                                                <input type="submit" value="Delete">
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="edit-categories" class="tab-content">
+                        <h3>Edit Categories</h3>
+                        <h4>Add Category</h4>
+                        <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+                            Category Name: <input type="text" name="new_category_name" required><br><br>
+                            <input type="submit" name="add_category" value="Add Category">
+                        </form>
+
+                        <h4>Categories</h4>
+                        <table>
+                            <tr>
+                                <th>Category Name</th>
+                                <th>Type</th>
+                                <th>Associated Accounts</th>
+                                <th>Action</th>
+                            </tr>
+                            <?php foreach ($account_categories as $id => $category) : ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($category['name']) ?></td>
+                                    <td><?= htmlspecialchars($category['status']) ?></td>
+                                    <td><?= htmlspecialchars($category['accounts']) ?></td>
+                                    <td>
+                                        <!-- Action Buttons -->
+                                        <?php if ($category['status'] != 'Global') : ?>
+                                            <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+                                                <input type="hidden" name="edit_category" value="<?= $id ?>">
+                                                <button type="submit">Edit</button>
+                                            </form>
+                                            <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+                                                <input type="hidden" name="delete_category" value="<?= $id ?>">
+                                                <button type="submit" onclick="return confirm('Are you sure you want to delete this category?');">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </table>
+                    </div>
+
+                    <div id="account-list" class="tab-content">
+                        <h3>Account List</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Account ID</th>
+                                    <th>Account Display Name</th>
+                                    <th>Total Expenses</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php while ($account_row = $accounts_result->fetch_assoc()) : ?>
+                                    <tr>
+                                        <td><?= $account_row["Account_ID"] ?></td>
+                                        <td><?= $account_row["Account_Display_Name"] ?></td>
+                                        <td>$<?= number_format($account_row["Total_Spent"], 2) ?></td>
+                                        <td>
+                                            <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+                                                <input type="hidden" name="delete_account" value="<?= $account_row["Account_ID"] ?>">
+                                                <button type="submit" onclick="return confirm('Are you sure you want to delete this account?');">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

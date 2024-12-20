@@ -58,21 +58,28 @@ $conn->close();
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login</title>
+    <title>Login </title>
+    <link href="css/background.css" rel="stylesheet" >
+    <link href="css/intro.css" rel="stylesheet" >
+    <link rel="icon" href="Images/PET-LOGO.png" type="image/png">
 </head>
 <body>
+    <div class="Main-container">
+        <h2>Login your Tracker Account</h2>
+        <?php if ($message != "") : ?>
+            <script>
+                alert("<?= $message ?>");
+            </script>
+        <?php endif; ?>
 
-<h2>Login</h2>
-
-<?php if ($message != "") : ?>
-    <p><?= $message ?></p>
-<?php endif; ?>
-
-<form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-    Username: <input type="text" name="username" required><br><br>
-    Password: <input type="password" name="password" required><br><br>
-    <input type="submit" value="Login">
-</form>
-
+        <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required><br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required><br>
+            <input type="submit" value="Login">
+        </form>
+        <p>Don't have an account? <a href="register.php">Register here</a></p>
+    </div>
 </body>
 </html>

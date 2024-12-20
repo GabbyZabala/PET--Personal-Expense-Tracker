@@ -1,0 +1,58 @@
+.Main-container{
+    background-color: #f8f6f6;
+    border-radius: 50px;
+    border: solid 5px;
+    padding: 5px;
+    width: 400px;
+    aspect-ratio: 0.80/1.125;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-direction: column;
+}
+/* Style the form container */
+form {
+    
+    padding: 20px;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 300px;
+}
+
+/* Input fields styling */
+input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* Button styling */
+input[type="submit"] {
+    background-color: rgba(122,114,114,1);
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 16px;
+}
+
+/* Button hover effect */
+input[type="submit"]:hover {
+    background-color: rgba(122,114,114,1);
+}
+
+/* Optional link styling */
+p a {
+    color: #007BFF;
+    text-decoration: none;
+}
+
+p a:hover {
+    text-decoration: underline;
+}

@@ -1,0 +1,23 @@
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(140deg, rgba(242,241,241,1) 19%, rgba(122,114,114,1) 36%, rgba(122,114,114,1) 57%, rgba(255,255,255,1) 91%);
+    background-size: 200% 100%;
+    animation: moveGradient 5s infinite ease-in-out;
+  }
+  
+  @keyframes moveGradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  
