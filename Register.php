@@ -20,18 +20,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST["username"];
     $password = $_POST["password"];
 
-    // Hash the password using password_hash()
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    // Store password in plain text (NO ENCRYPTION)
+    $plain_text_password = $password; 
 
     $stmt = $conn->prepare("INSERT INTO Account_Log (Account_Display_Name, Username, Password) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $account_display_name, $username, $hashed_password);
+    $stmt->bind_param("sss", $account_display_name, $username, $plain_text_password);
 
     if ($stmt->execute()) {
         $message = "Registration successful! You can now login.";
 
-        // Redirect to login.php after successful registration
+        // Redirect to login.php 
         header("Location: login.php");
-        exit(); // Make sure to exit after redirection
+        exit(); 
 
     } else {
         $message = "Error during registration: " . $stmt->error;

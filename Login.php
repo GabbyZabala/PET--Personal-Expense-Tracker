@@ -30,17 +30,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($result->num_rows == 1) {
         $row = $result->fetch_assoc();
-        $hashed_password = $row["Password"];
+        $stored_password = $row["Password"]; 
 
-        // Verify password using password_verify()
-        if (password_verify($input_password, $hashed_password)) {
+        // Verify password (plain text comparison):
+        // Trim whitespace from input password and stored password
+        if (trim($input_password) === trim($stored_password)) { 
             $_SESSION["account_id"] = $row["Account_ID"];
 
-            // Check user's status and redirect accordingly
+            // Check user's status and redirect
             if ($row["Status"] == 'Admin') {
-                header("Location: root.php"); // Redirect to admin page
+                header("Location: root.php"); 
             } else {
-                header("Location: index.php"); // Redirect to user page
+                header("Location: index.php"); 
             }
             exit();
         } else {
